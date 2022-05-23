@@ -217,6 +217,7 @@ app.get('/', (request, response) => {
 });
 
 const port = parseInt(yargs.port) || 3000;
-server.listen(port, () => {
-  console.log(`Starting server on port ${port}`);
+const host = parseInt(yargs.host) || "0.0.0.0";
+server.listen(port, host, () => {
+  console.log(`Starting server on http://${host}:${port}`);
 });
