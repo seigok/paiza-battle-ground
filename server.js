@@ -216,7 +216,7 @@ app.get('/', (request, response) => {
   response.sendFile(path.join(__dirname, '/static/3d.html'));
 });
 
-const port = parseInt(yargs.port) || 3000;
+const port = parseInt(yargs.port) || 5000;
 const host = parseInt(yargs.host) || "0.0.0.0";
 server.listen(port, host, () => {
   console.log(`Starting server on http://${host}:${port}`);
