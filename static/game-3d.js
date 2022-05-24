@@ -3,6 +3,7 @@ const canvas2d = $('#canvas-2d')[0];
 const context = canvas2d.getContext('2d');
 const canvas3d = $('#canvas-3d')[0];
 const playerImage = $("#player-image")[0];
+const brickImage = $('#brick-image')[0];
 
 const renderer = new THREE.WebGLRenderer({canvas: canvas3d});
 renderer.setClearColor('skyblue');
@@ -25,10 +26,13 @@ camera.lookAt(floorMesh.position);
 
 // Materials
 const bulletMaterial = new THREE.MeshLambertMaterial( { color: 0x808080 } );
-const wallMaterial = new THREE.MeshLambertMaterial( { color: 'firebrick' } );
 const playerTexture = new THREE.Texture(playerImage);
+const wallTexture = new THREE.Texture(brickImage);
 playerTexture.needsUpdate = true;
+wallTexture.needsUpdate = true;
 const playerMaterial = new THREE.MeshLambertMaterial({map: playerTexture});
+//const wallMaterial = new THREE.MeshLambertMaterial( { color: 'firebrick' } );
+const wallMaterial = new THREE.MeshLambertMaterial( {map: wallTexture} );
 const textMaterial = new THREE.MeshBasicMaterial({ color: 0xf39800, side: THREE.DoubleSide });
 const nicknameMaterial = new THREE.MeshBasicMaterial({ color: 'black', side: THREE.DoubleSide });
 
