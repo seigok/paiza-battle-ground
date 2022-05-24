@@ -4,6 +4,7 @@ const context = canvas2d.getContext('2d');
 const canvas3d = $('#canvas-3d')[0];
 const playerImage = $("#player-image")[0];
 const brickImage = $('#brick-image')[0];
+const groundImage = $('#ground-image')[0];
 
 const renderer = new THREE.WebGLRenderer({canvas: canvas3d});
 renderer.setClearColor('skyblue');
@@ -14,7 +15,9 @@ const camera = new THREE.PerspectiveCamera( 100, 1, 0.1, 2000 );
 
 // Floor
 const floorGeometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
-const floorMaterial = new THREE.MeshLambertMaterial({color : 'lawngreen'});
+const groundTexture = new THREE.Texture(groundImage);
+groundTexture.needsUpdate = true;
+const floorMaterial = new THREE.MeshLambertMaterial( {map: groundTexture} );
 const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
 floorMesh.position.set(500, 0, 500);
 floorMesh.receiveShadow = true;
