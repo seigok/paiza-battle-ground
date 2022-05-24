@@ -4,12 +4,18 @@ const socket = io();
 const canvas = $('#canvas-2d')[0];
 const context = canvas.getContext('2d');
 const playerImage = $('#player-image')[0];
+const brickImage = $('#brick-image')[0];
 
 function gameStart(){
     socket.emit('game-start', {nickname: $("#nickname").val() });
     $("#start-screen").hide();
 }
+function observeStart(){
+    socket.emit('observe-start', {nickname: "" });
+    $("#start-screen").hide();
+}
 $("#start-button").on('click', gameStart);
+$("#observe-button").on('click', observeStart);
 
 let movement = {};
 
@@ -78,19 +84,21 @@ socket.on('state', function(players, bullets, walls) {
 
     Object.values(players).forEach((player) => {
         context.save();
-        context.font = '20px Bold Arial';
-        context.fillText(player.nickname, player.x, player.y + player.height + 25);
-        context.font = '10px Bold Arial';
-        context.fillStyle = "gray";
-        context.fillText('♥'.repeat(player.maxHealth), player.x, player.y + player.height + 10);
-        context.fillStyle = "red";
-        context.fillText('♥'.repeat(player.health), player.x, player.y + player.height + 10);
-        context.translate(player.x + player.width/2, player.y + player.height/2);
-        context.rotate(player.angle);
-        context.drawImage(playerImage, 0, 0, playerImage.width, playerImage.height, -player.width/2, -player.height/2, player.width, player.height);
+        if (!player.observe){
+          context.font = '20px Bold Arial';
+          context.fillText(player.nickname, player.x, player.y + player.height + 25);
+          context.font = '10px Bold Arial';
+          context.fillStyle = "gray";
+          context.fillText('♥'.repeat(player.maxHealth), player.x, player.y + player.height + 10);
+          context.fillStyle = "red";
+          context.fillText('♥'.repeat(player.health), player.x, player.y + player.height + 10);
+          context.translate(player.x + player.width/2, player.y + player.height/2);
+          context.rotate(player.angle);
+          context.drawImage(playerImage, 0, 0, playerImage.width, playerImage.height, -player.width/2, -player.height/2, player.width, player.height);
+        }
         context.restore();
         
-        if(player.socketId === socket.id){
+        if(player.socketId === socket.id && player.observe!=true){
             context.save();
             context.font = '30px Bold Arial';
             context.fillText('You', player.x, player.y - 20);
@@ -104,8 +112,7 @@ socket.on('state', function(players, bullets, walls) {
         context.stroke();
     });
     Object.values(walls).forEach((wall) => {
-        context.fillStyle = 'black';
-        context.fillRect(wall.x, wall.y, wall.width, wall.height);
+        context.drawImage(brickImage, 0, 0, brickImage.width, brickImage.height,wall.x, wall.y, wall.width, wall.height);
     });
 });
 

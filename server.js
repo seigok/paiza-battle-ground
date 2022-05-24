@@ -63,6 +63,7 @@ class Player extends GameObject{
         this.bullets = {};
         this.point = 0;
         this.movement = {};
+        this.observe = false;
 
         do{
             this.x = Math.random() * (FIELD_WIDTH - this.width);
@@ -95,9 +96,26 @@ class Player extends GameObject{
         io.to(this.socketId).emit('dead');
     }
     toJSON(){
-        return Object.assign(super.toJSON(), {health: this.health, maxHealth: this.maxHealth, socketId: this.socketId, point: this.point, nickname: this.nickname});
+        return Object.assign(super.toJSON(), {health: this.health, maxHealth: this.maxHealth, socketId: this.socketId, point: this.point, observe: this.observe, nickname: this.nickname});
     }
 }
+
+class Observer extends Player{
+    constructor(obj){
+      super(obj);
+      this.nickname="";
+      this.width=0;
+      this.height=0;
+      this.health=0;
+      this.observe = true;
+      this.player = obj.player;
+    }
+    move(distance){}
+    shoot(){}
+    damage(){}
+    remove(){}
+}
+
 class Bullet extends GameObject{
     constructor(obj){
         super(obj);
@@ -138,10 +156,14 @@ let players = {};
 let bullets = {};
 let walls = {};
 
-for(let i=0; i<3; i++){
+let block_num = 6;
+let wunit = FIELD_WIDTH/block_num;
+let hunit = FIELD_HEIGHT/block_num;
+
+for(let i=0; i<block_num; i++){
     const wall = new Wall({
-            x: Math.random() * FIELD_WIDTH,
-            y: Math.random() * FIELD_HEIGHT,
+            x: 100+ (Math.random() * (FIELD_WIDTH-400)),
+            y: 100+ (i-1)*hunit + (Math.random() * hunit),
             width: 200,
             height: 50,
     });
@@ -157,6 +179,13 @@ io.on('connection', function(socket) {
         player = new Player({
             socketId: socket.id,
             nickname: config.nickname,
+        });
+        players[player.id] = player;
+    });
+    socket.on('observe-start', (config) => {
+        player = new Observer({
+            socketId: socket.id,
+            nickname: "",
         });
         players[player.id] = player;
     });
