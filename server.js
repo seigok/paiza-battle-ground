@@ -64,6 +64,7 @@ class Player extends GameObject{
         this.point = 0;
         this.movement = {};
         this.observe = false;
+        this.color = Math.floor(Math.random()*16581375);
 
         do{
             this.x = Math.random() * (FIELD_WIDTH - this.width);
@@ -96,7 +97,7 @@ class Player extends GameObject{
         io.to(this.socketId).emit('dead');
     }
     toJSON(){
-        return Object.assign(super.toJSON(), {health: this.health, maxHealth: this.maxHealth, socketId: this.socketId, point: this.point, observe: this.observe, nickname: this.nickname});
+        return Object.assign(super.toJSON(), {health: this.health, maxHealth: this.maxHealth, socketId: this.socketId, point: this.point, observe: this.observe, nickname: this.nickname,color: this.color});
     }
 }
 
@@ -144,7 +145,10 @@ class BotPlayer extends Player{
         super.remove();
         clearInterval(this.timer);
         setTimeout(() => {
-            const bot = new BotPlayer({nickname: this.nickname});
+            const bot = new BotPlayer({
+                          nickname: this.nickname,
+                          color: Math.floor(Math.random()*16581375)
+                        });
             players[bot.id] = bot;
         }, 3000);
     }
@@ -170,7 +174,7 @@ for(let i=0; i<block_num; i++){
     walls[wall.id] = wall;
 }
 
-const bot = new BotPlayer({nickname: 'bot'});
+const bot = new BotPlayer({nickname: 'bot',color: Math.floor(Math.random()*16581375)});
 players[bot.id] = bot;
 
 io.on('connection', function(socket) {
@@ -179,6 +183,7 @@ io.on('connection', function(socket) {
         player = new Player({
             socketId: socket.id,
             nickname: config.nickname,
+            color: Math.floor(Math.random()*16581375)
         });
         players[player.id] = player;
     });
@@ -238,8 +243,8 @@ setInterval(() => {
     io.sockets.emit('state', players, bullets, walls);
 }, 1000/30);
 
-
 app.use('/static', express.static(__dirname + '/static'));
+
 
 app.get('/', (request, response) => {
   response.sendFile(path.join(__dirname, '/static/3d.html'));

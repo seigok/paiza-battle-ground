@@ -1,3 +1,8 @@
+import { OBJLoader } from './OBJLoader.js';
+import { FontLoader } from './FontLoader.js';
+import { TextGeometry } from './TextGeometry.js';
+import { MTLLoader } from './MTLLoader.js';
+
 const socket = io();
 const canvas2d = $('#canvas-2d')[0];
 const context = canvas2d.getContext('2d');
@@ -43,6 +48,7 @@ const nicknameMaterial = new THREE.MeshBasicMaterial({ color: 'black', side: THR
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(-100, 300, -100);
 light.castShadow = true;
+light.receiveShadow = true;
 light.shadow.camera.left = -2000;
 light.shadow.camera.right = 2000;
 light.shadow.camera.top = 2000;
@@ -54,7 +60,7 @@ scene.add(light);
 const ambient = new THREE.AmbientLight(0x808080);
 scene.add(ambient);
 
-const loader = new THREE.FontLoader();
+const loader = new FontLoader();
 let font;
 loader.load('/static/helvetiker_bold.typeface.json', function(font_) {
     font = font_;
@@ -137,34 +143,54 @@ $('#canvas-2d').on('touchend', (event)=>{
 const Meshes = [];
 socket.on('state', (players, bullets, walls) => {
     Object.values(Meshes).forEach((mesh) => {mesh.used = false;});
-    
     // Players
     Object.values(players).forEach((player) => {
         let playerMesh = Meshes[player.id];
         if(!playerMesh){
             console.log('create player mesh');
             playerMesh = new THREE.Group();
-    		playerMesh.castShadow = true;
     		Meshes[player.id] = playerMesh;
     		scene.add(playerMesh);
+console.log(scene);
         }
         playerMesh.used = true;
-        playerMesh.position.set(player.x + player.width/2, player.width/2, player.y + player.height/2);
+        playerMesh.position.set(player.x + player.width/2, 1, player.y + player.height/2);
 		playerMesh.rotation.y = - player.angle;
         
         if(!playerMesh.getObjectByName('body')){
             console.log('create body mesh');
-    		mesh = new THREE.Mesh(new THREE.BoxGeometry(player.width, player.width, player.height), playerMaterial);
-    		mesh.castShadow = true;
-    		mesh.name = 'body';
-    		playerMesh.add(mesh);
+
+            const mtLoader = new MTLLoader();
+            mtLoader.load( 'static/model/tank2/tank2.mtl',function( materials){
+              materials.preload();
+              const objLoader = new OBJLoader();
+              let o_material = new THREE.MeshPhongMaterial( {
+                 color: player.color,
+                 specular: 0xbbaa99,
+                 shininess: 50,
+              });
+              objLoader.load ('static/model/tank2/tank2.obj', function (object) {
+                object.traverse( function ( child ) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    child.material = o_material;
+                });
+                object.scale.set(0.2,0.3,0.3);//縮尺の初期化
+                object.rotation.set(0,Math.PI,0);//角度の初期化
+                //   objmodel.position.set(-100,0,0);//位置の初期化
+                object.castShadow = true;
+                object.receiveShadow = true;
+                object.name = 'body';
+                playerMesh.add(object);
+              } );
+            });
         }
 
         if(font){
             if(!playerMesh.getObjectByName('nickname')){
                 console.log('create nickname mesh');
-                mesh = new THREE.Mesh(
-                    new THREE.TextGeometry(player.nickname,
+                let mesh = new THREE.Mesh(
+                    new TextGeometry(player.nickname,
                         {font: font, size: 10, height: 1}),
                         nicknameMaterial,
                 );
@@ -185,7 +211,7 @@ socket.on('state', (players, bullets, walls) => {
                 if(!mesh){
                     console.log('create health mesh');
                     mesh = new THREE.Mesh(
-                        new THREE.TextGeometry('*'.repeat(player.health),
+                        new TextGeometry('*'.repeat(player.health),
                             {font: font, size: 10, height: 1}),
                             textMaterial,
                     );
@@ -201,14 +227,14 @@ socket.on('state', (players, bullets, walls) => {
         
         if(player.socketId === socket.id){
             // Your player
-			camera.position.set(
-			    player.x + player.width/2 - 150 * Math.cos(player.angle),
-			    200,
-                player.y + player.height/2 - 150 * Math.sin(player.angle)
-            );
-			camera.rotation.set(0, - player.angle - Math.PI/2, 0);
-			
-			// Write to 2D canvas
+			      camera.position.set(
+			          player.x + player.width/2 - 150 * Math.cos(player.angle),
+			          90,
+                      player.y + player.height/2 - 150 * Math.sin(player.angle)
+                  );
+			      camera.rotation.set(0, - player.angle - Math.PI/2, 0);
+
+			      // Write to 2D canvas
             context.clearRect(0, 0, canvas2d.width, canvas2d.height);
             context.font = '30px Bold Arial';
             context.fillText(player.point + ' point', 20, 40);
@@ -219,24 +245,24 @@ socket.on('state', (players, bullets, walls) => {
     Object.values(bullets).forEach((bullet) => {
         let mesh = Meshes[bullet.id];
         if(!mesh){
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(bullet.width, bullet.width, bullet.height), bulletMaterial);
-		    mesh.castShadow = true;
-    		Meshes[bullet.id] = mesh;
-		    // Meshes.push(mesh);
-		    scene.add(mesh);
+          mesh = new THREE.Mesh(new THREE.BoxGeometry(bullet.width, bullet.width, bullet.height), bulletMaterial);
+          mesh.castShadow = true;
+          Meshes[bullet.id] = mesh;
+		      // Meshes.push(mesh);
+		      scene.add(mesh);
         }
         mesh.used = true;
-        mesh.position.set(bullet.x + bullet.width/2, 80, bullet.y + bullet.height/2);
+        mesh.position.set(bullet.x + bullet.width/2, 50, bullet.y + bullet.height/2);
     });
     
     // Walls
     Object.values(walls).forEach((wall) => {
         let mesh = Meshes[wall.id];
         if(!mesh){
-    		mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.width, 100, wall.height), wallMaterial);
+        mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.width, 250, wall.height), wallMaterial);
     		mesh.castShadow = true;
     		Meshes.push(mesh);
-    		Meshes[wall.id] = mesh;
+        Meshes[wall.id] = mesh;
     		scene.add(mesh);
         }
         mesh.used = true;
